@@ -3,6 +3,9 @@ pragma solidity ^0.8.0;
 
 contract stakingContract {
     mapping(address => uint256) stakedAmt;
+    mapping(address => uint) unclaimedRewards;
+    mapping(address => uint) lastUpdatedTime;
+
     uint256 public totalstaked;
     address public implementation;
 
@@ -31,10 +34,35 @@ contract stakingContract {
         (bool success,) = implementation.delegatecall(msg.data);
         require(success, "Delegation failed.");
     }
+
+    function getRewards(address _address) public view returns (uint) {
+        uint currentRewards = unclaimedRewards[_address];
+        uint updateTime = lastUpdateTime[_address];
+        uint newReward = (block.timestamp - updateTime) * balanceOf[_address] * 0.087;
+        return currentRewards + newReward;
+    }
+
+    function claimRewards () public {
+        uint currentRewards = unclaimedRewards[msg.sender];
+        uint updateTime = lastUpdateTime[msg.sender];
+        uint newReward = (block.timestamp - updateTime) * balanceOf[msg.sender] * 0.087;
+
+        payable(msg.sender).transfer(newReward + unclaimedRewards[msg.sender]);
+
+        unclaimedRewards[msg.sender] = 0; 
+        lastUpdatedTime = block.timestamp;
+    }
+
+    function balanceOf(address _address) public view returns (uint) {
+        return stakedAmt[_address];   
+    }
 }
 
 contract implementationV1 {
     mapping(address => uint256) stakedAmt;
+    mapping(address => uint) unclaimedRewards;
+    mapping(address => uint) lastUpdatedTime;
+
     uint256 public totalStaked;
     address public implementation;
 
@@ -45,6 +73,9 @@ contract implementationV1 {
         require(msg.value > 0, "Amt deposited should be more than 0");
         stakedAmt[msg.sender] += msg.value;
         totalStaked += msg.value;
+
+        lastUpdatedTime[msg.sender] = block.timestamp;
+        
 
         emit Staked(msg.sender, msg.value);
     }
@@ -57,4 +88,5 @@ contract implementationV1 {
 
         emit Unstaked(msg.sender, _amount);
     }
+        lastUpdatedTime[msg.sender] = block.timestamp;
 }

@@ -15,12 +15,12 @@ contract StakingTest is Test {
 
     function testStake() public {
         c.stake{value: 1}();
-        assert(c.totalStaked() > 0);
+        assert(c.totalstaked() > 0);
     }
 
     function testRevertStake() public {
         c.stake{value: 1}();
-        assert(c.totalStaked() < 0);
+        assert(c.totalstaked() < 0);
     }
     function testUnstake() public {}
 }
